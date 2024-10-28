@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Header Misconfiguration Scanner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #007bff;
+            font-size: 2.5em;
+        }
+        .input-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #urlInput {
+            width: 300px;
+            padding: 10px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        #scanButton {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        #scanButton:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            font-size: 1.5em;
+            color: #007bff;
+            margin-top: 20px;
+        }
+        #results {
+            display: none;
+            margin-top: 20px;
+            border: 1px solid #007bff;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .header-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .enabled {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disabled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .score {
+            font-size: 2.5em;
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            background-color: #e7f1ff;
+        }
+        .tips {
+            margin-top: 20px;
+            background-color: #e2e3e5;
+            padding: 15px;
+            border-radius: 5px;
+            list-style-type: none;
+        }
+        .tips li {
+            margin: 5px 0;
+        }
+        .about {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background-color: #e0f7fa;
+            border-radius: 5px;
+        }
+        .about-item {
+            text-align: center;
+        }
+        .recommendations {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            border: 1px solid #007bff;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Security Header Misconfiguration Scanner</h1>
+    </header>
+
+    <div class="input-container">
+        <input type="text" id="urlInput" placeholder="Enter URL (e.g., https://example.com)">
+        <button id="scanButton">Scan</button>
+    </div>
+    
+    <div class="loading" id="loading">
+        <i class="fas fa-spinner fa-spin"></i> Scanning...
+    </div>
+
+    <div id="results">
+        <div class="about">
+            <div class="about-item">
+                <strong>IP Address:</strong><br>
+                <span id="ipAddress"></span>
+            </div>
+            <div class="about-item">
+                <strong>Server Name:</strong><br>
+                <span id="serverName"></span>
+            </div>
+            <div class="about-item">
+                <strong>TLS Version:</strong><br>
+                <span id="tlsVersion"></span>
+            </div>
+            <div class="about-item">
+                <strong>Domain:</strong><br>
+                <span id="description"></span>
+            </div>
+            <div class="about-item">
+                <strong>Redirected:</strong><br>
+                <span id="redirected"></span>
+            </div>
+            <div class="about-item">
+                <strong>Final URL:</strong><br>
+                <span id="finalUrl"></span>
+            </div>
+        </div>
+        
+        <h2>Scan Results</h2>
+        <div id="headers"></div>
+        <div class="score" id="score"></div>
+        <div class="recommendations">
+            <h3>Recommendations</h3>
+            <div id="additionalInfo"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2024 Security Scanner by Prajwal Khante | All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.getElementById('scanButton').addEventListener('click', async () => {
+            const url = document.getElementById('urlInput').value;
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const headersContainer = document.getElementById('headers');
+            const additionalInfoContainer = document.getElementById('additionalInfo');
+
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            headersContainer.innerHTML = '';
+            additionalInfoContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url }),
+                });
+
+                const result = await response.json();
+                loading.style.display = 'none';
+                results.style.display = 'block';
+
+                document.getElementById('ipAddress').textContent = result.ip;
+                document.getElementById('serverName').textContent = result.server;
+                document.getElementById('tlsVersion').textContent = result.tls;
+                document.getElementById('description').textContent = result.additionalInfo.description;
+
+                // Show redirection info
+                document.getElementById('redirected').textContent = result.redirected ? 'Yes' : 'No';
+                document.getElementById('finalUrl').textContent = result.redirected_url ? result.redirected_url : 'N/A';
+
+                // Display headers
+                for (const [header, status] of Object.entries(result.headers)) {
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = `header-status ${status.toLowerCase()}`;
+                    headerDiv.textContent = `${header}: ${status}`;
+                    headersContainer.appendChild(headerDiv);
+                }
+
+                // Display score
+                document.getElementById('score').textContent = `Score: ${result.score}`;
+
+                // Display additional tips
+                for (const tip of result.additionalInfo.tips) {
+                    const tipItem = document.createElement('li');
+                    tipItem.textContent = tip;
+                    additionalInfoContainer.appendChild(tipItem);
+                }
+
+            } catch (error) {
+                loading.style.display = 'none';
+                alert('Failed to fetch data. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>
